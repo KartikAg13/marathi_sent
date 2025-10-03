@@ -24,6 +24,8 @@ from keras_preprocessing.text import Tokenizer
 
 from sklearn.metrics import classification_report, confusion_matrix
 
+import pickle
+
 np.random.seed(seed=42)
 tf.random.set_seed(seed=42)
 
@@ -77,12 +79,14 @@ class BiLSTM:
 
     def build(self, dropout_rate: float) -> Sequential:
         """Build the BiLSTM model architecture"""
+        vocab_size = min(self.max_words, len(self.tokenizer.word_index)) + 1
         model: Sequential = Sequential(
             [
                 Embedding(
-                    input_dim=self.max_words,
+                    input_dim=vocab_size,
                     output_dim=self.embedding_dim,
                     input_length=self.max_len,
+                    mask_zero=True,
                 ),
                 SpatialDropout1D(dropout_rate),
                 Bidirectional(LSTM(units=self.lstm_units)),
@@ -99,6 +103,7 @@ class BiLSTM:
         )
 
         self.model = model
+        model.build(input_shape=(None, self.max_len))
         model.summary()
         return model
 
@@ -266,7 +271,7 @@ def main() -> None:
     # Train model
     print("\nTraining model...")
     batch_size: int = 64
-    _ = model.train(x_train, y_train, x_val, y_val, epochs=50, batch_size=batch_size)
+    _ = model.train(x_train, y_train, x_val, y_val, epochs=5, batch_size=batch_size)
 
     # Plot training history
     model.plotHistory()
@@ -277,6 +282,11 @@ def main() -> None:
 
     # Plot confusion matrix
     model.plotCM(cm)
+
+    print("\nSaving tokenizer...")
+    with open("model/tokenizer.pkl", "wb") as f:
+        pickle.dump(model.tokenizer, f)
+    print("Tokenizer saved to model/tokenizer.pkl")
 
 
 if __name__ == "__main__":
