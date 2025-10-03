@@ -45,6 +45,18 @@ class BiLSTM:
         print(f"Vocabulary Size: {len(self.tokenizer.word_index)}")
         return (self.encode(train_text), self.encode(test_text), self.encode(val_text))
 
+    def maping(self, labels: pd.Series) -> np.ndarray:
+        return np.array([self.labels[label] for label in labels])
+
+    def mapLabels(
+        self, train_labels: pd.Series, test_labels: pd.Series, val_labels: pd.Series
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        return (
+            self.maping(train_labels),
+            self.maping(test_labels),
+            self.maping(val_labels),
+        )
+
 
 def getXY(data: pd.DataFrame) -> tuple[pd.Series, pd.Series]:
     return data["text"], data["label"]
@@ -61,6 +73,7 @@ def main() -> None:
 
     model: BiLSTM = BiLSTM(max_words=15000, max_len=150, embedding_dim=128)
     x_train, x_test, x_val = model.tokenize(x_train, x_test, x_val)
+    y_train, y_test, y_val = model.mapLabels(y_train, y_test, y_val)
 
 
 if __name__ == "__main__":
