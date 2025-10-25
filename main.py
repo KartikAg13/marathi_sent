@@ -16,6 +16,7 @@ from keras.layers import (
 )
 
 from keras.utils import pad_sequences
+from keras.regularizers import l2
 
 from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from keras.optimizers import Adam
@@ -30,7 +31,7 @@ np.random.seed(seed=42)
 tf.random.set_seed(seed=42)
 
 LOAD_PATH: str = "dataset/preprocess/"
-MODEL_PATH: str = "model/bilstm_marathi.keras"
+MODEL_PATH: str = "model/bilstm_marathi_last.keras"
 
 
 class BiLSTM:
@@ -59,6 +60,8 @@ class BiLSTM:
         self, train_text: pd.Series, test_text: pd.Series, val_text: pd.Series
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Fit tokenizer on training data and encode all datasets"""
+        # with open("model/tokenizer.pkl", "rb") as file:
+        #     self.tokenizer = pickle.load(file)
         self.tokenizer.fit_on_texts(texts=train_text)
         print(f"Vocabulary Size: {len(self.tokenizer.word_index)}")
         return (self.encode(train_text), self.encode(test_text), self.encode(val_text))
@@ -77,7 +80,7 @@ class BiLSTM:
             self.maping(val_labels),
         )
 
-    def build(self, dropout_rate: float) -> Sequential:
+    def build(self, dropout_rate: float):
         """Build the BiLSTM model architecture"""
         vocab_size = min(self.max_words, len(self.tokenizer.word_index)) + 1
         model: Sequential = Sequential(
@@ -89,15 +92,13 @@ class BiLSTM:
                     mask_zero=True,
                 ),
                 SpatialDropout1D(dropout_rate),
-                Bidirectional(LSTM(units=self.lstm_units)),
-                Dropout(dropout_rate),
-                Dense(units=64, activation="relu"),
+                Bidirectional(LSTM(units=self.lstm_units, recurrent_dropout=0.25)),
                 Dropout(dropout_rate),
                 Dense(units=3, activation="softmax"),
             ]
         )
         model.compile(
-            optimizer=Adam(learning_rate=0.001),
+            optimizer=Adam(learning_rate=0.0005),
             loss=SparseCategoricalCrossentropy(),
             metrics=["accuracy"],
         )
@@ -105,7 +106,6 @@ class BiLSTM:
         self.model = model
         model.build(input_shape=(None, self.max_len))
         model.summary()
-        return model
 
     def train(
         self,
@@ -127,7 +127,7 @@ class BiLSTM:
         reduce_lr = ReduceLROnPlateau(
             monitor="val_loss",
             patience=3,
-            factor=0.5,
+            factor=0.25,
             min_lr=1e-7,
             verbose=1,
         )
@@ -146,7 +146,6 @@ class BiLSTM:
                 callbacks=[early_stop, reduce_lr, checkpoint],
                 verbose="auto",
             )
-        return self.history
 
     def evaluate(self, x_test: np.ndarray, y_test: np.ndarray):
         """Evaluate model on test set"""
@@ -250,10 +249,10 @@ def main() -> None:
 
     # Initialize model
     model: BiLSTM = BiLSTM(
-        max_words=15000,
-        max_len=150,
-        embedding_dim=256,
-        lstm_units=256,
+        max_words=50000,
+        max_len=125,
+        embedding_dim=128,
+        lstm_units=96,
     )
 
     # Tokenize texts
@@ -266,12 +265,12 @@ def main() -> None:
 
     # Build model
     print("\nBuilding model...")
-    _ = model.build(dropout_rate=0.25)
+    model.build(dropout_rate=0.5)
 
     # Train model
     print("\nTraining model...")
     batch_size: int = 64
-    _ = model.train(x_train, y_train, x_val, y_val, epochs=5, batch_size=batch_size)
+    model.train(x_train, y_train, x_val, y_val, epochs=50, batch_size=batch_size)
 
     # Plot training history
     model.plotHistory()
@@ -284,7 +283,7 @@ def main() -> None:
     model.plotCM(cm)
 
     print("\nSaving tokenizer...")
-    with open("model/tokenizer.pkl", "wb") as f:
+    with open("model/tokenizer_last.pkl", "wb") as f:
         pickle.dump(model.tokenizer, f)
     print("Tokenizer saved to model/tokenizer.pkl")
 
