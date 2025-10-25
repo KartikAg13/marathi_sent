@@ -16,7 +16,6 @@ from keras.layers import (
 )
 
 from keras.utils import pad_sequences
-from keras.regularizers import l2
 
 from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from keras.optimizers import Adam
@@ -31,7 +30,7 @@ np.random.seed(seed=42)
 tf.random.set_seed(seed=42)
 
 LOAD_PATH: str = "dataset/preprocess/"
-MODEL_PATH: str = "model/bilstm_marathi_last.keras"
+MODEL_PATH: str = "model/bilstm_marathi.keras"
 
 
 class BiLSTM:
@@ -249,7 +248,7 @@ def main() -> None:
 
     # Initialize model
     model: BiLSTM = BiLSTM(
-        max_words=50000,
+        max_words=10000,
         max_len=125,
         embedding_dim=128,
         lstm_units=96,

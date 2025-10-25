@@ -1,0 +1,79 @@
+seed: 42
+save_dir: model/
+plots_dir: plots/
+
+# Tokenizer & Text Preprocessing
+tokenizer:
+  max_words: 10000 # Maximum vocabulary size
+  oov_token: "<OOV>" # Out-of-vocabulary token
+  max_len: 125 # Max sequence length
+  padding: "post" # Padding direction
+  truncating: "post" # Truncation direction
+  save_path: "model/tokenizer.pkl"
+
+# Embedding Layer
+embedding:
+  input_dim: 10000 # Usually max_words
+  output_dim: 128 # Embedding vector dimension
+  input_length: 125
+  mask_zero: true
+
+# BiLSTM Layer
+bilstm:
+  units: 96
+  recurrent_dropout: 0.25
+  bidirectional: true
+
+# Regularization
+regularization:
+  dropout_rate: 0.5
+  spatial_dropout_rate: 0.5
+
+# Dense (Output) Layer
+dense:
+  units: 3
+  activation: "softmax"
+
+# Optimizer & Loss
+optimizer:
+  type: "adam"
+  learning_rate: 0.0005
+
+loss:
+  type: "SparseCategoricalCrossentropy"
+
+metrics:
+  - "accuracy"
+
+# Training Configuration
+training:
+  epochs: 50
+  batch_size: 64
+
+# Callbacks
+callbacks:
+  early_stopping:
+    monitor: "val_loss"
+    patience: 7
+    restore_best_weights: true
+
+  reduce_lr:
+    monitor: "val_loss"
+    patience: 3
+    factor: 0.25
+    min_lr: 1e-7
+
+  model_checkpoint:
+    monitor: "val_accuracy"
+    save_best_only: true
+    filepath: "model/bilstm_marathi.keras"
+
+# Evaluation & Reporting
+evaluation:
+  metrics:
+    - "classification_report"
+    - "confusion_matrix"
+  save_plots: true
+  plot_filenames:
+    history: "history.png"
+    confusion_matrix: "confusion_matrix.png"
