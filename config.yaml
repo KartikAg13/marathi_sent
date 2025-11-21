@@ -4,18 +4,18 @@ plots_dir: plots/
 
 # Tokenizer & Text Preprocessing
 tokenizer:
-  max_words: 10000 # Maximum vocabulary size
+  max_words: 20000 # Maximum vocabulary size
   oov_token: "<OOV>" # Out-of-vocabulary token
-  max_len: 125 # Max sequence length
+  max_len: 200 # Max sequence length
   padding: "post" # Padding direction
   truncating: "post" # Truncation direction
   save_path: "model/tokenizer.pkl"
 
 # Embedding Layer
 embedding:
-  input_dim: 10000 # Usually max_words
+  input_dim: max_words # Usually max_words
   output_dim: 128 # Embedding vector dimension
-  input_length: 125
+  input_length: 200
   mask_zero: true
 
 # BiLSTM Layer
@@ -47,7 +47,7 @@ metrics:
 
 # Training Configuration
 training:
-  epochs: 50
+  epochs: 30
   batch_size: 64
 
 # Callbacks
@@ -60,7 +60,7 @@ callbacks:
   reduce_lr:
     monitor: "val_loss"
     patience: 3
-    factor: 0.25
+    factor: 0.6
     min_lr: 1e-7
 
   model_checkpoint:

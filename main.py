@@ -282,7 +282,7 @@ def main() -> None:
     model.plotCM(cm)
 
     print("\nSaving tokenizer...")
-    with open("model/tokenizer_last.pkl", "wb") as f:
+    with open("model/tokenizer.pkl", "wb") as f:
         pickle.dump(model.tokenizer, f)
     print("Tokenizer saved to model/tokenizer.pkl")
 
